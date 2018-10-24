@@ -65,7 +65,7 @@ public class PrintABCUsingSemaphore {
 		for(int i=0;i<times;i++) {
 			System.out.println("Entry:"+Thread.currentThread().getName()+"   "+name+"   i="+i);
 			current.acquire();
-			System.out.print(name);
+			System.out.println(name);
 			next.release();
 			System.out.println("Exit:"+Thread.currentThread().getName()+"   "+name+"   i="+i);
 		}
