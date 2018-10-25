@@ -1,0 +1,7 @@
+操场上有5个跑道，一个跑道一次只能有一个学生在上面跑步，一旦所有跑道在使用，那么后面的学生就需要等待，直到有一个学生不跑了
+分析 定义一个操场类PlayGround ，有若干条跑道（跑道类Track），操场类有方法acquireTrack获取跑道，releaseTrack释放跑道
+在acquireTrack方法中，应该调用semaphore的的acquire去获取贡献资源跑道是否还有空闲的，没有则该方法所在线程被阻塞
+在releaseTrack方法中，释放掉指定的跑道之后，将可利用跑道资源数目加1
+
+定义学生类模拟赛跑者参加赛跑利用跑道，学生类中有PlayGround作为唯一的操场
+定义SemaphoreDemo类整合场景，传递一个公共PlayGround，然后每个学生都是一个线程去使用共享资源跑道
