@@ -17,25 +17,21 @@ public class QuickSort {
 		if(s>=e) {
 			return ;
 		}
-		int first=s,last=e,povit=arr[s];
+		int first=s,last=e,pivot=arr[s];
 		while(first<last) {
-			while(first<last && arr[last]>=povit) {
+			while(first<last && arr[last]>=pivot) {
 				--last;
 			}
 			arr[first]=arr[last];
-			while(first<last && arr[first]<=povit) {
+			while(first<last && arr[first]<=pivot) {
 				first++;
 			}
 			arr[last]=arr[first];
 		}
-		arr[first]=povit;
+		arr[first]=pivot;
 		for(int i=0;i<arr.length;i++)
 			System.out.print(arr[i]+" ");
 		System.out.println();
-		/*Arrays.asList(arr).forEach(i->{
-			System.out.print(i+" ");
-			System.out.println();
-		});*/
 		quickSort(arr,s,first-1);
 		quickSort(arr,first+1,e);
 	}
