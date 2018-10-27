@@ -29,8 +29,9 @@ public class QuickSort {
 			arr[last]=arr[first];
 		}
 		arr[first]=pivot;
-		for(int i=0;i<arr.length;i++)
-			System.out.print(arr[i]+" ");
+		Arrays.stream(arr).forEach(System.out::print);
+	/*	for(int i=0;i<arr.length;i++)
+			System.out.print(arr[i]+" ");*/
 		System.out.println();
 		quickSort(arr,s,first-1);
 		quickSort(arr,first+1,e);

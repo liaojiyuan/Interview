@@ -47,7 +47,8 @@ public class TestScannerFromConsole {
 	}
 
 	private static int shuixian(int a) {
-		int i=a/10/10%10;//百位
+//		int i=a%100; 不能得到百位上的数字
+		int i=a/100%10;//百位
 		int j=a/10%10; //十位
 		int k=a%10; //个位数字
 		if(a == ((int)Math.pow(i, 3)+(int)Math.pow(j, 3)+(int)Math.pow(k, 3))) {
