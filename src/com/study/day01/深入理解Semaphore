@@ -1,0 +1,148 @@
+简述：Semaphore是计数信号量。Semaphore管理一系列许可证。每个acquire方法阻塞，直到有一个许可证可以获得然后拿走一个许可证；每个release方法增加一个许可证，这可能会释放一个阻塞的acquire方法。其实并无许可证这个对象，Semaphore只是维持了一个可获得许可证的数量。 
+用途：Semaphore经常用来限制获取某种资源的线程数量。
+源码解析：Semaphore有两种模式：公平模式和非公平模式。公平模式就是多个线程调用acquire方法的顺序就是这些线程获得许可证的顺序，遵循FIFO。非公平模式就是抢占式的，即有可能一个新的获取线程恰好在一个许可证释放时得到了这个许可证，而前面还有线程在等待。
+
+构造方法：两个，对应Semaphore的两种模式
+// 创建一个给定数量permits的许可证，并且是非公平模式的Semaphore
+public Semaphore(int permits) {
+     sync = new NonfairSync(permits);
+}
+// 创建一个给定数量permits的许可证，并且制定Semaphore的模式
+public Semaphore(int permits,boolean fair) {
+     sync = fair ? new FairSync(permits) : new NonfairSync(permits);
+}
+Semaphore内部基于AQS(AbstractQueuedSynchronizer 抽象队列同步锁 同步框架模板)的共享模式，所以实现都委托给了Sync类
+看NonfairSync的构造方法
+NonfairSync(int permits) {
+     super(permits);
+}
+可以看到直接调用父类Sync的构造方法 而Sync则是直接继承AbstractQueuedSynchronizer 同步模板类AQS
+Sync(int permits) {
+     setState(permits);
+}
+直接调用setState方法，即AQS中的资源就是许可证的数量
+
+先看非公平模式下获取一个许可证
+    public void acquire(int permits) throws InterruptedException {
+        if (permits < 0) throw new IllegalArgumentException();
+        sync.acquireSharedInterruptibly(permits);
+    }
+    调用了Sync的acquireSharedInterruptibly方法，该方法在父类AQS中
+public final void acquireSharedInterruptibly(int arg)
+            throws InterruptedException {
+            //如果线程被中断了，抛出异常
+        if (Thread.interrupted())
+            throw new InterruptedException();
+            //获取需客户正失败，将线程加入到等待队列中
+        if (tryAcquireShared(arg) < 0)
+            doAcquireSharedInterruptibly(arg);
+}
+AQS的子类要实现共享模式的话，需要实现tryAcquireShared方法，看一下NonfairSync的该方法实现
+protected int tryAcquireShared(int acquires) {
+   return nonfairTryAcquireShared(acquires);
+}
+该方法调用了父类Sync中的nonfairTryAcquireShared方法
+final int nonfairTryAcquireShared(int acquires) {
+            for (;;) {
+            //获取剩余许可数量
+                int available = getState();
+                //计算给完这次许可数量后的剩余许可数量
+                int remaining = available - acquires;
+                //如果许可数量不够或者可以将许可数量重置的话，返回
+                if (remaining < 0 ||
+                    compareAndSetState(available, remaining))
+                    return remaining;
+            }
+ }
+ 从上面调用可看出，只有在许可数量不够时返回值才会小于0，其余返回都是剩余许可数量（包括返回0，表示本次分配完之后就没有许可数量了，但是本次分配的许可数量还是可以满足的），一旦许可数量不够，后面线程就会被阻塞,因为for（；；）无限空循环。再看公平的获取
+ 
+ protected int tryAcquireShared(int acquires) {
+            for (;;) {
+            //如果前面有线程在等待，直接返回了-1
+                if (hasQueuedPredecessors())
+                    return -1;
+                    //后面则与非公平acquire一样
+                int available = getState();
+                int remaining = available - acquires;
+                if (remaining < 0 ||
+                    compareAndSetState(available, remaining))
+                    return remaining;
+            }
+}
+从上面两端代码可以看出，FairSync和NonfairSync区别在于首先会判断当前队列是否有线程在等待，如果有，就老老实实进入等待队列；而不像nonfair首先试一把，说不定就恰好获得一个许可，这样就可以插队了。
+
+释放许可
+public void release(int permits) {
+        if (permits < 0) throw new IllegalArgumentException();
+        sync.releaseShared(permits);
+}
+releaseShared方法在AQS中
+public final boolean releaseShared(int arg) {
+        //如果改变许可数量成功
+        if (tryReleaseShared(arg)) {
+        //释放阻塞的线程
+            doReleaseShared();
+            return true;
+        }
+        return false;
+}
+
+AQS的子类实现共享模式的类需要实现tryReleaseShared类来判断是否释放成功
+protected final boolean tryReleaseShared(int releases) {
+            for (;;) {
+            //获取当前许可数量
+                int current = getState();
+                //计算回收后的数量
+                int next = current + releases;
+                if (next < current) // overflow
+                    throw new Error("Maximum permit count exceeded");
+                    //CAS改变许可数量成功，就会调用AQS的doReleaseShared方法释放阻塞的线程
+                if (compareAndSetState(current, next))
+                    return true;
+            }
+}
+
+减小许可数量
+Semaphore还有减小许可数量的方法，当资源用完不能再用时，这时候就减小许可证数量
+protected void reducePermits(int reduction) {
+        if (reduction < 0) throw new IllegalArgumentException();
+        sync.reducePermits(reduction);
+}
+可以看到，委托给了Sync去具体实现
+final void reducePermits(int reductions) {
+            for (;;) {
+                int current = getState();
+                int next = current - reductions;
+                if (next > current) 
+                // underflow 下溢  在有符号整数进行加减法时，+要注意上溢， - 要注意下溢
+                //举例，对于byte一个字节有符号整数[-128,127] a，b，假设 a=127,b=1，c=a+b时要注意结果上溢，为-128，即当c<a时就表明发生了溢出错误
+                //对于减法 a=-128,b=1 c=a-b时要注意下溢 为1 即当c>a时表明仿生了溢出错误
+                    throw new Error("Permit count underflow");
+                if (compareAndSetState(current, next))
+                    return;
+            }
+}
+从上面可以看出，就是CAS改变AQS中的state变量，该变量代表许可证的数量
+
+获取剩余许可数量
+Semaphore还可以一次将剩余许可数量全部取走，方法drain
+ public int drainPermits() {
+        return sync.drainPermits();
+}
+调用内部类Sync的方法
+final int drainPermits() {
+            for (;;) {
+                int current = getState();
+                //获取目前所有许可证，如果不为0则设置AQS中的资源为0并返回目前许可证数目
+                if (current == 0 || compareAndSetState(current, 0))
+                    return current;
+            }
+}
+总结
+Semaphore是信号量，用于管理一组资源。其内部是给予AQS的共享模式，AQS的状态代表许可证的数量，在许可证数量不足时，线程被挂起并进入等待队列；而一旦有一个线程释放资源，那么久有可能重新唤起等待队列中的线程继续执行。
+知识点：
+操作系统信号量机制的复习，利用信号量实现共享资源的互斥使用
+在java中实现线程对共享资源的互斥使用Semaphore
+AQS的同步模式机制（简单了解）
+无限循环的妙用 for(;;)实现线程阻塞且一直在做同一件事知道满足某种条件被打断跳出循环
+整形数的加减法的慎用，注意对结果进行溢出检查防止出现漏洞。
