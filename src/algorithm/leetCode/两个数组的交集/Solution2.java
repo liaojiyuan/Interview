@@ -1,9 +1,6 @@
 package algorithm.leetCode.两个数组的交集;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 /**
 * @author gaochaochao
@@ -27,7 +24,6 @@ public class Solution2 {
         	return new int[0];
         }
         int[] ret1=new int[len1>len2?len2:len1];
-        List<Integer> resultList=new ArrayList<>();
         //双指针法 参考归并排序的合并示例代码
         int i=0,j=0,cnt=0;
         while(i<len1 && j<len2) {

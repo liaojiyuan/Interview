@@ -1,7 +1,5 @@
 package algorithm.leetCode.两个数组的交集;
 
-import java.util.Arrays;
-
 /**
 * @author gaochaochao
 * @date 2019年1月20日 下午7:19:04
