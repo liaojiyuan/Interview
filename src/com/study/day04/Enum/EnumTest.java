@@ -1,4 +1,4 @@
-package com.study.day04;
+package com.study.day04.Enum;
 //枚举类型只能在顶级类，接口，静态上下文中定义，不能定义在方法里面。
 enum color{red,green,yellow};
 
