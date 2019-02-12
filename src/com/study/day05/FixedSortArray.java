@@ -108,8 +108,11 @@ public class FixedSortArray {
 	//重复插入一个元素多次
 	private void insertValueForMultiTimes(int newValue, int count){
 		int index=binarySearch(newValue);
-		for(int i=this.size+count-1;i>index;i++){
+		for(int i=this.size+count-1;i>index+count;i++){
 			this.array[i]=this.array[i-count];
+		}
+		for(int i=index+1;i<=index+count;i++){
+			this.array[i]=newValue;
 		}
 	}
 }
