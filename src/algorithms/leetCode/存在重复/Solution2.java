@@ -1,4 +1,4 @@
-package algorithm.leetCode.存在重复;
+package algorithms.leetCode.存在重复;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package algorithm.leetCode.存在重复;
+package algorithms.leetCode.存在重复;
 /**
 * @author gaochaochao
 * @date 2019年1月20日 下午5:02:25

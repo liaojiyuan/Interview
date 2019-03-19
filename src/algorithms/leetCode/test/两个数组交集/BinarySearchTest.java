@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import algorithm.leetCode.两个数组的交集.BinarySearch;
+import algorithms.leetCode.两个数组的交集.BinarySearch;
 /**
 * @author gaochaochao
 * @date 2019年1月20日 下午3:51:15

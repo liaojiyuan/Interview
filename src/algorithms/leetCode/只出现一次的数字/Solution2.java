@@ -1,4 +1,4 @@
-package algorithm.leetCode.只出现一次的数字;
+package algorithms.leetCode.只出现一次的数字;
 
 import java.util.HashSet;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package algorithm.leetCode.两个数组的交集;
+package algorithms.leetCode.两个数组的交集;
 
 /**
 * @author gaochaochao
